@@ -168,6 +168,12 @@
       transform: translateY(-3px);
       box-shadow: 0 8px 32px rgba(107, 26, 26, 0.45);
     }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.85rem;
+    }
 
     /* Section titles */
     .section-wrap {
@@ -491,7 +497,10 @@
     <div class="hero-inner">
       <h1 class="logo">Starroth</h1>
       <p class="hero-tagline">O oráculo que habita entre os astros e os deuses</p>
-      <a class="btn-cta" href="#agendamento">Agendar minha tiragem</a>
+      <div class="hero-actions">
+        <a class="btn-cta" href="#agendamento">Agendar minha tiragem</a>
+        <a class="btn-cta" href="https://www.instagram.com/starrotth_/" target="_blank" rel="noopener noreferrer">Veja meu Instagram</a>
+      </div>
     </div>
   </header>
 
@@ -565,10 +574,6 @@
         <input type="text" id="nome" name="nome" required autocomplete="name" />
       </div>
       <div class="form-group">
-        <label for="contato">Contato / Telegram</label>
-        <input type="text" id="contato" name="contato" required autocomplete="tel" />
-      </div>
-      <div class="form-group">
         <label for="tiragem">Tiragem desejada</label>
         <select id="tiragem" name="tiragem" required></select>
       </div>
@@ -586,13 +591,13 @@
       </div>
       <button type="submit" class="btn-submit">Enviar para o Oráculo</button>
     </form>
-    <a class="btn-secondary" href="https://instagram.com/starrotth_" target="_blank" rel="noopener noreferrer">Tirou dúvidas? Fale pelo Instagram →</a>
+    <a class="btn-secondary" href="#" id="whatsLink" target="_blank" rel="noopener noreferrer">Tirou dúvidas? Fale pelo WhatsApp →</a>
   </section>
 
   <footer class="section-fade">
     <p class="logo-small">Starroth</p>
     <p class="tagline">O tarot ilumina, mas você escolhe o caminho.</p>
-    <a class="ig-link" href="https://instagram.com/starrotth_" target="_blank" rel="noopener noreferrer" aria-label="Instagram Starroth">
+    <a class="ig-link" href="https://www.instagram.com/starrotth_/" target="_blank" rel="noopener noreferrer" aria-label="Instagram Starroth">
       <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
       Instagram
     </a>
@@ -726,26 +731,46 @@
       );
       document.querySelectorAll('.section-fade').forEach(function (sec) { io.observe(sec); });
 
+      var whatsappBaseUrl = '';
+      var whatsLink = document.getElementById('whatsLink');
+      fetch('/api/config')
+        .then(function (response) {
+          if (!response.ok) throw new Error('Falha ao carregar configuracao de contato.');
+          return response.json();
+        })
+        .then(function (data) {
+          whatsappBaseUrl = data.whatsappBaseUrl || '';
+          if (whatsappBaseUrl) {
+            whatsLink.href = whatsappBaseUrl;
+          }
+        })
+        .catch(function () {
+          whatsLink.textContent = 'WhatsApp indisponível no momento';
+          whatsLink.removeAttribute('href');
+        });
+
       document.getElementById('formAgenda').addEventListener('submit', function (e) {
         e.preventDefault();
         var nome = document.getElementById('nome').value.trim();
-        var contato = document.getElementById('contato').value.trim();
         var tiragem = document.getElementById('tiragem').value;
         var data = document.getElementById('data').value;
         var horario = document.getElementById('horario').value;
         var mensagem = document.getElementById('mensagem').value.trim();
-        if (!nome || !contato || !tiragem) {
-          alert('Por favor, preencha nome, contato e tiragem.');
+        if (!nome || !tiragem) {
+          alert('Por favor, preencha nome e tiragem.');
+          return;
+        }
+        if (!whatsappBaseUrl) {
+          alert('Canal de WhatsApp indisponível no momento.');
           return;
         }
         var text = 'Olá Starroth! Gostaria de agendar uma tiragem.\n' +
           'Nome: ' + nome + '\n' +
-          'Contato: ' + contato + '\n' +
           'Tiragem: ' + tiragem + '\n' +
           'Data preferida: ' + (data || '—') + '\n' +
           'Horário: ' + (horario || '—') + '\n' +
           'Mensagem: ' + (mensagem || '—');
-        var url = 'https://t.me/starrotth_?text=' + encodeURIComponent(text);
+        var url = whatsappBaseUrl + '?text=' + encodeURIComponent(text);
         window.open(url, '_blank', 'noopener,noreferrer');
       });
     })();

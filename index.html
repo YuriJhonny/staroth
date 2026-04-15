@@ -731,22 +731,24 @@
       );
       document.querySelectorAll('.section-fade').forEach(function (sec) { io.observe(sec); });
 
-      var whatsappBaseUrl = '';
+      var whatsappBaseUrl = 'https://wa.me/5554981143034';
       var whatsLink = document.getElementById('whatsLink');
+      
+      // Tenta buscar do servidor (se estiver rodando)
       fetch('/api/config')
         .then(function (response) {
-          if (!response.ok) throw new Error('Falha ao carregar configuracao de contato.');
+          if (!response.ok) throw new Error('Usando configuracao padrao');
           return response.json();
         })
         .then(function (data) {
-          whatsappBaseUrl = data.whatsappBaseUrl || '';
-          if (whatsappBaseUrl) {
+          if (data.whatsappBaseUrl) {
+            whatsappBaseUrl = data.whatsappBaseUrl;
             whatsLink.href = whatsappBaseUrl;
           }
         })
         .catch(function () {
-          whatsLink.textContent = 'WhatsApp indisponível no momento';
-          whatsLink.removeAttribute('href');
+          // Usa o número padrão se o servidor não estiver disponível
+          whatsLink.href = whatsappBaseUrl;
         });
 
       document.getElementById('formAgenda').addEventListener('submit', function (e) {
@@ -760,17 +762,14 @@
           alert('Por favor, preencha nome e tiragem.');
           return;
         }
-        if (!whatsappBaseUrl) {
-          alert('Canal de WhatsApp indisponível no momento.');
-          return;
-        }
         var text = 'Olá Starroth! Gostaria de agendar uma tiragem.\n' +
           'Nome: ' + nome + '\n' +
           'Tiragem: ' + tiragem + '\n' +
           'Data preferida: ' + (data || '—') + '\n' +
           'Horário: ' + (horario || '—') + '\n' +
           'Mensagem: ' + (mensagem || '—');
-        var url = whatsappBaseUrl + '?text=' + encodeURIComponent(text);
+        var encodedText = encodeURIComponent(text);
+        var url = whatsappBaseUrl + '?text=' + encodedText;
         window.open(url, '_blank', 'noopener,noreferrer');
       });
     })();
